@@ -50,9 +50,9 @@ pip install -r requirements.txt
 
 ## Usage
 
-To train the model, remove the main function and define the network how you want, here an simple example:
+1. To train the model, remove the main function and define the network how you want, here a simple example:
 
-    ```python
+```python
     from main import DenseLayer
 	import numpy as np
 
@@ -63,12 +63,12 @@ To train the model, remove the main function and define the network how you want
 
 	print("ReLU Output:", relu_output)
 	print("Softmax Output:", softmax_output)
-    ```
+```
 
-run the following command:
-    ```python
-    python run main.py
-    ```
+2. run the following command:
+```python
+	python run main.py
+```
 ## Progress
 
 Future Update
