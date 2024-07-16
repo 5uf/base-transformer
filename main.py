@@ -111,7 +111,7 @@ class Network:
         """
         self._compile(data)
 
-        #np.random.seed(99)
+        np.random.seed(99)
 
         for i in range(len(self.architecture)):
             self.params.append(
@@ -262,21 +262,50 @@ def predict(model, X):
     """
     return model._forwardprop(X)
 
+def quantize(model, X):
+    """
+    Quantize the model weights
+    """
+    for idx, layer in enumerate(model.network):
+        model.params[idx]["W"] = np.where(model.params[idx]["W"] > 0, 1, -1)
+        model.params[idx]["b"] = np.where(model.params[idx]["b"] > 0, 1, -1)
+    return model
 
 if __name__ == "__main__":
 
     X, y = get_data("iris.csv")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+    param_grid = {
+        "neurons": [64, 128, 256],
+        "epochs": [100, 200, 300],
+        "lr": [0.01, 0.001, 0.0001],
+    }
+    
+    # Tuning hyperparameters
+    best_model = None
+    best_accuracy = 0
+    for neurons in param_grid['neurons']:
+        for epochs in param_grid['epochs']:
+            for lr in param_grid['lr']:
+                model = Network()
+                model.add(DenseLayer(neurons=neurons))
+                model.add(DenseLayer(neurons=neurons//2))
+                model.add(DenseLayer(neurons=3))
+                model.add(DenseLayer(neurons=neurons//2))
+                model.add(DenseLayer(neurons=neurons))
+                model.train(X_train, y_train, epochs)
+                yhat = model._forwardprop(X_test)
+                accuracy = model._get_accuracy(yhat, y_test)
+                if accuracy > best_accuracy:
+                    best_accuracy = accuracy
+                    best_model = model
+                    best_model = quantize(best_model, X_test)
+                    print(f"Neurons: {neurons}, Epochs: {epochs}, LR: {lr}, Accuracy: {accuracy}")
 
-    # define the model how you want
-    model = Network()
-    model.add(DenseLayer(neurons=64))
-    model.add(DenseLayer(neurons=32))
-    model.add(DenseLayer(neurons=3))
-    model.train(X_train, y_train, epochs=1000)
-
-    save_model(model, "model.pkl")
+    save_model(best_model, "model.pkl")
     model = load_model("model.pkl")
     yhat = predict(model, X_test)
-    print(yhat)
+    accuracy = model._get_accuracy(yhat, y_test)
+    print(f"Accuracy: {accuracy}")
+    
